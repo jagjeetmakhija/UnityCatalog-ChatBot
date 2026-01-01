@@ -1,5 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Database, Users, Shield, CheckCircle, AlertCircle, Loader, Settings, Terminal, Copy, CheckCheck } from 'lucide-react';
+
+// Lightweight icon shims to avoid external module imports in the browser-only build
+const Send = () => <span role="img" aria-label="send">📤</span>;
+const Database = () => <span role="img" aria-label="database">🗄️</span>;
+const Users = () => <span role="img" aria-label="users">👥</span>;
+const Shield = () => <span role="img" aria-label="shield">🛡️</span>;
+const CheckCircle = () => <span role="img" aria-label="check">✅</span>;
+const AlertCircle = () => <span role="img" aria-label="alert">⚠️</span>;
+const Loader = () => <span role="img" aria-label="loading">⏳</span>;
+const Settings = () => <span role="img" aria-label="settings">⚙️</span>;
+const Terminal = () => <span role="img" aria-label="terminal">🖥️</span>;
+const Copy = () => <span role="img" aria-label="copy">📋</span>;
+const CheckCheck = () => <span role="img" aria-label="copied">✔️</span>;
 
 const UnityCatalogChatbot = () => {
   // Connection Setup State
