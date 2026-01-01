@@ -4,6 +4,7 @@ emoji: 🧠
 colorFrom: purple
 colorTo: green
 sdk: docker
+sdk_version: "1.0"
 app_file: Dockerfile
 pinned: false
 license: mit
@@ -11,7 +12,15 @@ license: mit
 
 # Unity Catalog Chatbot
 
-An intelligent chatbot for managing Databricks Unity Catalog through natural language. Built with React, Flask, Claude AI, and the Databricks SDK.
+An intelligent chatbot for managing Databricks Unity Catalog through natural language. Built with Flask, Claude AI, and the Databricks SDK.
+
+## Deployment Resources
+
+- [QUICK_DEPLOY.md](QUICK_DEPLOY.md) — five minute Hugging Face rollout
+- [HF_DEPLOYMENT.md](HF_DEPLOYMENT.md) — detailed Spaces guide with screenshots
+- [HF_DEPLOYMENT_SUMMARY.md](HF_DEPLOYMENT_SUMMARY.md) — reference and troubleshooting checklist
+- [deploy-to-huggingface.sh](deploy-to-huggingface.sh) / [deploy-to-huggingface.bat](deploy-to-huggingface.bat) — guided automation scripts
+- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) — Docker, K8s, ECS, Azure ACI, and more
 
 ## Features
 
