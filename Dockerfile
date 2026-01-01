@@ -27,8 +27,9 @@ COPY conftest.py .
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
-EXPOSE 5000
+# Hugging Face Spaces injects PORT (default 7860)
+ENV PORT=7860
+EXPOSE ${PORT}
 
 # Run with gunicorn (production server)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "app:app"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-7860} --workers 2 --timeout 120 --access-logfile - app:app"]
