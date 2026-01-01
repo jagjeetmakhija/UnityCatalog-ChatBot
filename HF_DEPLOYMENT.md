@@ -1,153 +1,155 @@
-# Deploy UnityCatalog-ChatBot on Hugging Face Spaces
+# Deploy to Hugging Face Spaces
 
-Quick 5-minute deployment guide for Hugging Face Spaces.
+This guide explains how to deploy the Unity Catalog Chatbot to Hugging Face Spaces.
 
 ## Prerequisites
-- Hugging Face account (free signup: https://huggingface.co/join)
-- Databricks credentials (host + token)
-- Anthropic API key
 
-## Quick Start
+1. **Hugging Face Account** - Create one at https://huggingface.co
+2. **Git** - Installed and configured
+3. **Databricks Credentials** - API key and workspace URL
+4. **Anthropic API Key** - For Claude AI
 
-### 1️⃣ Create Space on Hugging Face
+## Step 1: Create a Hugging Face Space
+
+1. Go to [Hugging Face Spaces](https://huggingface.co/spaces)
+2. Click **"Create new Space"**
+3. Fill in:
+   - **Space name**: `unity-catalog-chatbot` (or your choice)
+   - **License**: MIT (or your preference)
+   - **Space SDK**: Docker
+   - **Space hardware**: CPU (or GPU if needed)
+4. Click **"Create Space"**
+
+## Step 2: Clone the Space Repository
+
 ```bash
-# Go to: https://huggingface.co/new
-# - Name: unitycatalog-chatbot
-# - Type: Space
-# - Runtime: Docker
-# - Click "Create Space"
+# Clone your newly created space
+git clone https://huggingface.co/spaces/YOUR_USERNAME/unity-catalog-chatbot
+cd unity-catalog-chatbot
 ```
 
-### 2️⃣ Clone the Space
+## Step 3: Add Files
+
+Copy these files from this repo to the cloned Space:
+
 ```bash
-git clone https://huggingface.co/spaces/YOUR_USERNAME/unitycatalog-chatbot
-cd unitycatalog-chatbot
+cp /path/to/UnityCatalog-ChatBot/{app.py,unity-catalog-chatbot.jsx,unity_catalog_service.py,index.html,requirements.txt,.env.example,config.py,conftest.py} .
+cp /path/to/UnityCatalog-ChatBot/Dockerfile .
 ```
 
-### 3️⃣ Copy Project Files
+Or manually add the files to the Space repository.
+
+## Step 4: Configure Environment Variables
+
+In the Space settings on Hugging Face:
+
+1. Go to **Settings → Variables and Secrets**
+2. Add these secrets (HF will mask them):
+   - `ANTHROPIC_API_KEY`: Your Anthropic API key
+   - `DATABRICKS_HOST`: Your Databricks workspace URL
+   - `DATABRICKS_TOKEN`: Your Databricks personal access token
+
+## Step 5: Push to Hugging Face
+
 ```bash
-# Copy all files from UnityCatalog-ChatBot to your Space
-cp -r ../UnityCatalog-ChatBot/* .
-
-# Required files:
-# - app.py
-# - unity_catalog_service.py
-# - config.py
-# - requirements.txt
-# - Dockerfile
-# - README.md (already created)
-```
-
-### 4️⃣ Add README for Space
-Create `README.md`:
-```markdown
----
-title: Unity Catalog Chatbot
-emoji: 💬
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
----
-
-# Unity Catalog Chatbot
-
-Chat interface for Databricks Unity Catalog management.
-
-## Setup
-Add secrets in Space settings:
-- `DATABRICKS_HOST`
-- `DATABRICKS_TOKEN`
-- `ANTHROPIC_API_KEY`
-
-Visit https://huggingface.co/spaces/YOUR_USERNAME/unitycatalog-chatbot
-```
-
-### 5️⃣ Push to Hugging Face
-```bash
+# Add all files
 git add .
-git commit -m "Deploy to HF Spaces"
+
+# Commit
+git commit -m "Initial deployment"
+
+# Push to HF
 git push
 ```
 
-### 6️⃣ Add Secrets
-1. Go to Space → **Settings** → **Secrets**
-2. Add three secrets:
-   - `DATABRICKS_HOST` = `https://your-workspace.databricks.com`
-   - `DATABRICKS_TOKEN` = your PAT
-   - `ANTHROPIC_API_KEY` = your key
+The Space will automatically build and deploy.
 
-3. Space rebuilds automatically ✅
+## Step 6: Access Your App
 
-### 7️⃣ Access Your App
-- URL: `https://huggingface.co/spaces/YOUR_USERNAME/unitycatalog-chatbot`
-- API: `https://YOUR_USERNAME-unitycatalog-chatbot.hf.space/api/`
-
-## Test Endpoints
-
-```bash
-# Health check
-curl https://YOUR_USERNAME-unitycatalog-chatbot.hf.space/api/health
-
-# List catalogs
-curl https://YOUR_USERNAME-unitycatalog-chatbot.hf.space/api/catalogs
-
-# Chat
-curl -X POST https://YOUR_USERNAME-unitycatalog-chatbot.hf.space/api/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Create a catalog named demo"}'
+Once deployed, you can access it at:
+```
+https://huggingface.co/spaces/YOUR_USERNAME/unity-catalog-chatbot
 ```
 
-## Common Issues
+## How It Works
 
-| Issue | Solution |
-|-------|----------|
-| Build fails | Check build logs in Settings. Verify Dockerfile exists. |
-| App crashes | Check runtime logs. Ensure secrets are set. |
-| API returns 500 | Credentials invalid. Test locally first. |
-| "Port already in use" | App should auto-detect port. Check `app.py`. |
+- **Frontend**: React UI served from `index.html`
+- **Backend**: Flask API at `/api/chat` and other endpoints
+- **Port**: Automatically uses port 7860 (HF Spaces standard)
+- **Static Files**: Served from the root directory
 
-## Monitoring
+## Testing the Deployment
 
-View logs in Space:
-1. **Settings** → **Build logs** (deployment)
-2. **Settings** → **Runtime logs** (application)
+1. Open the Space URL
+2. You'll see the setup screen asking for credentials
+3. Enter your Databricks workspace details:
+   - Host: `https://your-workspace.cloud.databricks.com`
+   - Token: Your Databricks API token
+   - Workspace ID: (optional)
+4. Click "✓ Connect"
+5. Type: "Create a catalog named test_catalog"
+6. You should see the response and SQL preview
 
-## Upgrade Options
+## Troubleshooting
 
-- **Free**: 2 CPU, shared GPU, variable uptime
-- **Pro**: $50/month, dedicated resources, custom domain
+### App doesn't start
+- Check logs in Space settings → Logs
+- Verify all environment variables are set
+- Ensure `requirements.txt` has all dependencies
+
+### "Cannot reach /api/chat"
+- The Flask app may not be running
+- Check that port is correctly set to 7860
+- Verify CORS is enabled
+
+### Databricks connection fails
+- Double-check credentials
+- Ensure token hasn't expired
+- Verify workspace has Unity Catalog enabled
+
+### Frontend not loading
+- Check browser console (F12) for errors
+- Ensure `index.html` is in the root directory
+- Clear browser cache and reload
+
+## Security Notes
+
+⚠️ **Important:**
+- Never hardcode API keys in files
+- Use Hugging Face Secrets for sensitive credentials
+- Don't commit `.env` files with real credentials
+- Token will be masked in HF logs
+
+## File Structure
+
+```
+huggingface-space/
+├── app.py                      ← Flask backend (serves frontend + API)
+├── unity-catalog-chatbot.jsx   ← React UI component
+├── unity_catalog_service.py    ← Databricks integration
+├── index.html                  ← React entry point
+├── requirements.txt            ← Python dependencies
+├── config.py                   ← Configuration
+├── Dockerfile                  ← Docker container config
+└── [other config files]
+```
+
+## Next Steps
+
+1. **Monitor**: Check Space logs for any errors
+2. **Test**: Try creating a catalog, granting permissions, etc.
+3. **Customize**: Modify the UI colors, add more features
+4. **Share**: Share the Space URL with your team
+
+## Support
+
+For issues:
+1. Check the Space logs
+2. Review the troubleshooting section
+3. Check Hugging Face documentation: https://huggingface.co/docs/hub/spaces
+4. Review app logs locally first before deploying
 
 ---
 
-## File Checklist
-
-Before pushing, ensure you have:
-
-- [ ] `app.py` - Flask server
-- [ ] `unity_catalog_service.py` - UC operations
-- [ ] `config.py` - Configuration management
-- [ ] `requirements.txt` - Python dependencies
-- [ ] `Dockerfile` - Container definition
-- [ ] `README.md` - Space description (with metadata)
-- [ ] `.gitignore` - Exclude `.env` and `__pycache__`
-
-## Commands Quick Reference
-
-```bash
-# Clone space
-git clone https://huggingface.co/spaces/username/unitycatalog-chatbot
-
-# Push updates
-git add . && git commit -m "Update" && git push
-
-# View logs
-# Go to: https://huggingface.co/spaces/username/unitycatalog-chatbot/settings
-
-# Delete space (if needed)
-# Go to: https://huggingface.co/spaces/username/unitycatalog-chatbot/settings → Delete
-```
-
----
-
-**Your app will be live in 2-5 minutes!** 🚀
+**Deployment Date**: December 2025  
+**Status**: Production Ready

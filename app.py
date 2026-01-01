@@ -3,7 +3,7 @@ Unity Catalog Chatbot API Server
 Flask API to handle natural language requests and execute Unity Catalog operations
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import re
@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 import anthropic
 from unity_catalog_service import UnityCatalogService
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 # Initialize services (lazy to allow mocking in tests)
@@ -26,6 +26,33 @@ def _init_services():
     if claude_client is None:
         claude_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     return uc_service, claude_client
+
+
+def validate_databricks_connection(host: str, token: str, workspace_id: str = None) -> Dict:
+    """Validate connection to Databricks workspace."""
+    try:
+        from databricks.sdk import WorkspaceClient
+        
+        # Create client with provided credentials
+        client = WorkspaceClient(
+            host=host,
+            token=token
+        )
+        
+        # Try to get workspace info
+        workspace_info = client.workspace.get_status(path="/")
+        
+        return {
+            "success": True,
+            "message": "Successfully connected to Databricks workspace",
+            "workspace_path": workspace_info.path
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Connection failed: {str(e)}"
+        }
+
 
 # System prompt for Claude to parse Unity Catalog requests
 SYSTEM_PROMPT = """You are an expert Unity Catalog assistant. Your role is to:
@@ -283,6 +310,20 @@ Just describe what you want to do in natural language!""",
         }
 
 
+@app.route('/', methods=['GET'])
+def index():
+    """Serve the React UI"""
+    return send_from_directory('.', 'index.html')
+
+
+@app.route('/<path:path>', methods=['GET'])
+def serve_static(path):
+    """Serve static files"""
+    if path and os.path.exists(path):
+        return send_from_directory('.', path)
+    return send_from_directory('.', 'index.html')
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Main chat endpoint"""
@@ -366,10 +407,50 @@ def execute_sql():
         }), 500
 
 
+@app.route('/api/validate-connection', methods=['POST'])
+def validate_connection():
+    """Validate Databricks connection with provided credentials"""
+    try:
+        data = request.json
+        host = data.get('host', '').strip()
+        token = data.get('token', '').strip()
+        workspace_id = data.get('workspaceId', '').strip()
+        
+        if not host or not token:
+            return jsonify({
+                'success': False,
+                'message': 'Host and token are required'
+            }), 400
+        
+        # Ensure host starts with https://
+        if not host.startswith('https://'):
+            if host.startswith('http://'):
+                host = 'https://' + host[7:]
+            else:
+                host = 'https://' + host
+        
+        result = validate_databricks_connection(host, token, workspace_id)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 401
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Validation error: {str(e)}'
+        }), 500
+
+
 if __name__ == '__main__':
+    # Get port from environment variable (HF Spaces uses 7860)
+    port = int(os.getenv('PORT', 7860))
+    host = os.getenv('HOST', '0.0.0.0')
+    
     # Development server
     app.run(
-        host='0.0.0.0',
-        port=5000,
-        debug=True
+        host=host,
+        port=port,
+        debug=os.getenv('FLASK_ENV') == 'development'
     )
