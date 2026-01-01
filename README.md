@@ -1,3 +1,14 @@
+---
+title: Unity Catalog Chatbot
+emoji: 🧠
+colorFrom: purple
+colorTo: green
+sdk: docker
+app_file: Dockerfile
+pinned: false
+license: mit
+---
+
 # Unity Catalog Chatbot
 
 An intelligent chatbot for managing Databricks Unity Catalog through natural language. Built with React, Flask, Claude AI, and the Databricks SDK.
