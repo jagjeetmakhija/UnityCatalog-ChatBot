@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+const { useState, useRef, useEffect } = React;
 
 // Lightweight icon shims to avoid external module imports in the browser-only build
 const Send = () => <span role="img" aria-label="send">📤</span>;
