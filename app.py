@@ -14,9 +14,18 @@ from unity_catalog_service import UnityCatalogService
 app = Flask(__name__)
 CORS(app)
 
-# Initialize services
-uc_service = UnityCatalogService()
-claude_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# Initialize services (lazy to allow mocking in tests)
+uc_service = None
+claude_client = None
+
+def _init_services():
+    """Lazy initialize services."""
+    global uc_service, claude_client
+    if uc_service is None:
+        uc_service = UnityCatalogService()
+    if claude_client is None:
+        claude_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    return uc_service, claude_client
 
 # System prompt for Claude to parse Unity Catalog requests
 SYSTEM_PROMPT = """You are an expert Unity Catalog assistant. Your role is to:
@@ -68,7 +77,8 @@ Always return valid JSON only, no additional text."""
 def parse_with_claude(user_message: str) -> Dict:
     """Use Claude to parse complex natural language requests"""
     try:
-        message = claude_client.messages.create(
+        _, client = _init_services()  # Lazy init
+        message = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1000,
             system=SYSTEM_PROMPT,
@@ -100,12 +110,13 @@ def parse_with_claude(user_message: str) -> Dict:
 
 def execute_intent(intent_data: Dict) -> Dict:
     """Execute the parsed intent using Unity Catalog service"""
+    uc, _ = _init_services()  # Lazy init
     intent = intent_data.get("intent")
     params = intent_data.get("params", {})
     
     try:
         if intent == "createCatalog":
-            return uc_service.create_catalog(
+            return uc.create_catalog(
                 name=params.get("catalog"),
                 comment=params.get("comment")
             )
@@ -115,7 +126,7 @@ def execute_intent(intent_data: Dict) -> Dict:
             # If full path provided (e.g., "catalog.schema")
             if not schema and catalog and '.' in catalog:
                 catalog, schema = catalog.split('.', 1)
-            return uc_service.create_schema(
+            return uc.create_schema(
                 catalog=catalog,
                 schema=schema,
                 comment=params.get("comment")
@@ -134,7 +145,7 @@ def execute_intent(intent_data: Dict) -> Dict:
                 elif len(parts) == 2 and catalog:
                     schema, table = parts
             
-            return uc_service.create_table(
+            return uc.create_table(
                 catalog=catalog,
                 schema=schema,
                 table=table,
@@ -154,7 +165,7 @@ def execute_intent(intent_data: Dict) -> Dict:
             else:
                 securable_type = "TABLE"
             
-            return uc_service.grant_permission(
+            return uc.grant_permission(
                 principal=params.get("principal"),
                 privilege=params.get("privilege"),
                 securable_type=securable_type,
@@ -172,7 +183,7 @@ def execute_intent(intent_data: Dict) -> Dict:
             else:
                 securable_type = "TABLE"
             
-            return uc_service.revoke_permission(
+            return uc.revoke_permission(
                 principal=params.get("principal"),
                 privilege=params.get("privilege"),
                 securable_type=securable_type,
@@ -180,13 +191,13 @@ def execute_intent(intent_data: Dict) -> Dict:
             )
         
         elif intent == "listCatalogs":
-            return uc_service.list_catalogs()
+            return uc.list_catalogs()
         
         elif intent == "listSchemas":
-            return uc_service.list_schemas(params.get("catalog"))
+            return uc.list_schemas(params.get("catalog"))
         
         elif intent == "listTables":
-            return uc_service.list_tables(
+            return uc.list_tables(
                 params.get("catalog"),
                 params.get("schema")
             )
@@ -202,7 +213,7 @@ def execute_intent(intent_data: Dict) -> Dict:
             else:
                 securable_type = "TABLE"
             
-            return uc_service.show_grants(securable_type, obj)
+            return uc.show_grants(securable_type, obj)
         
         elif intent == "setOwner":
             obj = params.get("object", "")
@@ -215,7 +226,7 @@ def execute_intent(intent_data: Dict) -> Dict:
             else:
                 securable_type = "TABLE"
             
-            return uc_service.set_owner(
+            return uc.set_owner(
                 securable_type=securable_type,
                 securable_name=obj,
                 owner=params.get("owner")
@@ -224,7 +235,7 @@ def execute_intent(intent_data: Dict) -> Dict:
         elif intent == "getTableDetails":
             parts = params.get("table", "").split('.')
             if len(parts) == 3:
-                return uc_service.get_table(parts[0], parts[1], parts[2])
+                return uc.get_table(parts[0], parts[1], parts[2])
             else:
                 return {
                     "success": False,
@@ -315,21 +326,24 @@ def health():
 @app.route('/api/catalogs', methods=['GET'])
 def get_catalogs():
     """Get all catalogs"""
-    result = uc_service.list_catalogs()
+    uc, _ = _init_services()
+    result = uc.list_catalogs()
     return jsonify(result)
 
 
 @app.route('/api/schemas/<catalog>', methods=['GET'])
 def get_schemas(catalog):
     """Get schemas in a catalog"""
-    result = uc_service.list_schemas(catalog)
+    uc, _ = _init_services()
+    result = uc.list_schemas(catalog)
     return jsonify(result)
 
 
 @app.route('/api/tables/<catalog>/<schema>', methods=['GET'])
 def get_tables(catalog, schema):
     """Get tables in a schema"""
-    result = uc_service.list_tables(catalog, schema)
+    uc, _ = _init_services()
+    result = uc.list_tables(catalog, schema)
     return jsonify(result)
 
 
@@ -341,7 +355,8 @@ def execute_sql():
         sql = data.get('sql', '')
         warehouse_id = data.get('warehouse_id')
         
-        result = uc_service.execute_sql(sql, warehouse_id)
+        uc, _ = _init_services()
+        result = uc.execute_sql(sql, warehouse_id)
         return jsonify(result)
     
     except Exception as e:
