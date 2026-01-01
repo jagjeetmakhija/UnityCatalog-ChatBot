@@ -33,5 +33,5 @@ ENV FLASK_ENV=production
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:7860/api/health || exit 1
 
-# Run Flask app
-CMD ["python", "app.py"]
+# Run with gunicorn for production
+CMD ["gunicorn", "-b", "0.0.0.0:7860", "app:app"]
