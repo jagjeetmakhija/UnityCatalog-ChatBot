@@ -14,6 +14,14 @@ from unity_catalog_service import UnityCatalogService
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
+
+def _no_cache(response):
+    """Disable caching for SPA assets to avoid stale UI (304s)."""
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 # Initialize services (lazy to allow mocking in tests)
 uc_service = None
 claude_client = None
@@ -313,15 +321,15 @@ Just describe what you want to do in natural language!""",
 @app.route('/', methods=['GET'])
 def index():
     """Serve the React UI"""
-    return send_from_directory('.', 'index.html')
+    return _no_cache(send_from_directory('.', 'index.html'))
 
 
 @app.route('/<path:path>', methods=['GET'])
 def serve_static(path):
     """Serve static files"""
     if path and os.path.exists(path):
-        return send_from_directory('.', path)
-    return send_from_directory('.', 'index.html')
+        return _no_cache(send_from_directory('.', path))
+    return _no_cache(send_from_directory('.', 'index.html'))
 
 
 @app.route('/api/chat', methods=['POST'])
