@@ -1,0 +1,81 @@
+{
+  "sample_queries": [
+    {
+      "id": 1,
+      "category": "Catalog Management",
+      "query": "Create a catalog called sales_data",
+      "description": "Creates a new catalog for sales data"
+    },
+    {
+      "id": 2,
+      "category": "Schema Management",
+      "query": "Create a schema named bronze in the sales_data catalog",
+      "description": "Creates a bronze layer schema for medallion architecture"
+    },
+    {
+      "id": 3,
+      "category": "Table Creation",
+      "query": "Create a table sales_data.bronze.raw_orders with columns: order_id (string), customer_id (string), order_date (timestamp), amount (decimal)",
+      "description": "Creates a table for raw order data"
+    },
+    {
+      "id": 4,
+      "category": "Permission Management",
+      "query": "Grant SELECT on sales_data.bronze.raw_orders to data_analysts",
+      "description": "Grants read permission to data analysts group"
+    },
+    {
+      "id": 5,
+      "category": "Query Operations",
+      "query": "List all catalogs",
+      "description": "Lists all available catalogs"
+    },
+    {
+      "id": 6,
+      "category": "Query Operations",
+      "query": "Show me all schemas in the sales_data catalog",
+      "description": "Lists all schemas in a specific catalog"
+    },
+    {
+      "id": 7,
+      "category": "Permission Management",
+      "query": "Show grants on sales_data.bronze.raw_orders",
+      "description": "Displays current permissions on a table"
+    },
+    {
+      "id": 8,
+      "category": "Ownership Management",
+      "query": "Set ownership of sales_data.bronze to data_engineering_team",
+      "description": "Transfers ownership of a schema"
+    },
+    {
+      "id": 9,
+      "category": "Medallion Architecture",
+      "query": "Set up a medallion architecture with bronze, silver, and gold schemas in my_lakehouse",
+      "description": "Creates a complete medallion architecture setup"
+    },
+    {
+      "id": 10,
+      "category": "Complex Operations",
+      "query": "Create catalog analytics, then create schemas bronze, silver, gold, and grant ALL PRIVILEGES on analytics.gold to analysts",
+      "description": "Multi-step operation for complete data pipeline setup"
+    }
+  ],
+  "quick_actions": [
+    "List all catalogs",
+    "List all schemas",
+    "Show current workspace info",
+    "Help - show me what you can do"
+  ],
+  "demo_workflow": {
+    "title": "Complete Data Lakehouse Setup",
+    "steps": [
+      "Create a catalog called demo_lakehouse",
+      "Create schemas bronze, silver, and gold in demo_lakehouse",
+      "Create table demo_lakehouse.bronze.customer_raw with columns: id (string), name (string), email (string), created_at (timestamp)",
+      "Grant SELECT on demo_lakehouse.bronze to data_engineers",
+      "Grant ALL PRIVILEGES on demo_lakehouse.gold to analysts",
+      "Show grants on demo_lakehouse.bronze.customer_raw"
+    ]
+  }
+}
